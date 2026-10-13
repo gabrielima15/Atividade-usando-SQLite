@@ -7,8 +7,8 @@ import sqlite3
 
 app = Flask(__name__)
 
- 
- # FEITO.   
+
+# FEITO.
 @app.get('/instituicoes')
 def listarInstituicoes():
 
@@ -19,7 +19,7 @@ def listarInstituicoes():
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT 
+            SELECT
             id,
             no_entidade,
             co_entidade,
@@ -36,7 +36,7 @@ def listarInstituicoes():
             qt_mat_prof,
             qt_mat_eja,
             qt_mat_esp
-            FROM tb_instituicao_ensino""")
+            FROM tb_instituicao_ensino where is_delete = false""")
         rows = cursor.fetchall()
 
         instituicoesAll = [
@@ -64,7 +64,7 @@ def getInstituicaoById(id):
 
         cursor.execute(
             """
-            SELECT 
+            SELECT
             id,
             no_entidade,
             co_entidade,
@@ -81,7 +81,7 @@ def getInstituicaoById(id):
             qt_mat_prof,
             qt_mat_eja,
             qt_mat_esp
-            FROM tb_instituicao_ensino WHERE id = ?
+            FROM tb_instituicao_ensino WHERE id = ? AND is_delete = false
             """,
             (id,)
         )
@@ -229,7 +229,7 @@ def deletarInstituicao(id):
         cursor = conn.cursor()
 
         cursor.execute(
-            "DELETE FROM tb_instituicao_ensino WHERE id = ?",
+            "UPDATE tb_instituicao_ensino SET is_delete = true WHERE id = ?",
             (id,)
         )
 
@@ -257,7 +257,7 @@ def deletarInstituicao(id):
         if conn is not None:
             conn.close()
             
-# ---------------------------------------------------------------------      
+# ---------------------------------------------------------------------
 
 # FEITO.
 @app.get("/usuarios")
@@ -265,7 +265,7 @@ def getUsuarios():
     try:
         conect = get_connection()
         cursor = conect.cursor()
-        cursor.execute("SELECT id, nome, email, senha FROM tb_usuario")
+        cursor.execute("SELECT id, nome, email, senha FROM tb_usuario where is_delete = false")
         rows = cursor.fetchall()
         usuariosAll = [Usuario(*row).toDict() for row in rows]
         return {"usuarios": usuariosAll}
@@ -299,7 +299,10 @@ def getUsuarioById(id):
     conect = get_connection()
     cursor = conect.cursor()
     try:
-        cursor.execute("SELECT id, nome, email, senha FROM tb_usuario WHERE id = ?", (id,))
+        cursor.execute("""
+                    SELECT id, nome, email, senha
+                    FROM tb_usuario WHERE id = ? AND is_delete = false
+                    """, (id,))
         row = cursor.fetchone()
         if row:
             return {"usuario": Usuario(*row).toDict()}, 200
@@ -339,7 +342,7 @@ def deleteUsuario(id):
     conect = get_connection()
     cursor = conect.cursor()
     try:
-        cursor.execute("DELETE FROM tb_usuario WHERE id = ?", (id,))
+        cursor.execute("UPDATE tb_usuario SET is_delete = true WHERE id = ?", (id,))
         conect.commit()
         return {"message": "Usuário deletado com sucesso"}, 200
     except sqlite3.Error as e:
